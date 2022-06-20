@@ -79,6 +79,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 [![Product Name Screen Shot][product-screenshot]](https://github.com/CrystlBearer/MyPass)
+
 This project is an offline password manager that uses Python Tkinter and the cryptography library.
 This doesn't rely on the internet and stores on the local user's machine in their home directory.
 The user's credentials are stored into an encrypted file that can only be accessed during the use of the application.
