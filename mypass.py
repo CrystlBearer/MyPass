@@ -9,7 +9,7 @@ from openpyxl import load_workbook
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-# import cryptography
+import logging
 
 
 # UI Setup
@@ -17,16 +17,23 @@ bgColor = "#002120"
 wdgtXPad = 5
 wdgtYPad = 7
 
+
+
 # Key
 symkey = None
+
+
 
 # Hard-coded items
 folderName = ".mypass"
 encryptedPassFilename = ".reserve.mpdb.xlsx"
 saltedHashPassFilename = ".auth.mpdb.xlsx"
+logFilename = "mypass.log"
 folderPath = os.path.join(os.path.expanduser("~"), folderName)
 encryptedPassFilePath = os.path.join(os.path.expanduser("~"), folderName, encryptedPassFilename)
 saltedHashPassFilePath = os.path.join(os.path.expanduser("~"), folderName, saltedHashPassFilename)
+logPath = os.path.join(os.path.expanduser("~"), folderName, logFilename)
+
 
 # Key check
 passIsSame = False
@@ -34,32 +41,44 @@ passIsSame = False
 
 def initialize():
     """
-    If the first time, create a folder created and called ~/.mypass.
-    The file the passwords will be stored will be called reserve.mpdb.
-    This reserve.mpdb will be an encrypted excel sheet with the Fernet library and will perform python functions to
-    store into local variable after decrypting the sheet. Once information is extracted, the file is encrypted again.
-    The user's password that is salted and hashed will be stored in a different file for future comparisons.
+    For first time creation:
+    Application will create a folder created and called ~/.mypass.
+    The file the passwords will be stored will be called .reserve.mpdb.xlsx.
+    This .reserve.mpdb.xlsx will be an encrypted excel sheet with the Fernet library and will perform python functions to
+    store into local variable after decrypting the sheet. It will only be decrypted during use of this application, after
+    the password has been applied to it.
 
-    When the user exits then
+    The file to store the Master password is stored in .auth.mpdb.xlsx.
+    The user's Master password is salted and hashed will be stored in a different file for future comparisons.
+
+    After first time creation:
+    Window will prompt for the user's master password and proceed to decrypt the file. For any file modifictions, it must be done
+    during the time the Application has it's Main Window open.
 
     :return:
     """
-
+    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', filename=logPath, encoding='utf-8', level=logging.DEBUG)
+    logging.info("Initializing MyPass application.")
     if not os.path.exists(folderPath):
+        logging.info("Creating folder at " + folderPath)
         os.mkdir(folderPath)
     if (not os.path.exists(encryptedPassFilePath) and not os.path.exists(saltedHashPassFilePath)):
+        logging.info("Changing permissions of the folder at " + folderPath)
         os.chmod(folderPath, stat.S_IRWXU)
-        # passwords = Workbook()
-        # passwords.save(encryptedPassFilePath)
-        # hashes = Workbook()
-        # hashes.save(saltedHashPassFilePath)
+        logging.info("Setting master password at " + saltedHashPassFilePath)
         setPassword()
+        logging.info("Starting up main window of MyPass to store credentials at " + encryptedPassFilePath)
         drawWindow()
     else:
+        logging.info("Checking the master password is same to the one on file.")
         checkPassword()
         if passIsSame:
+            logging.info("Decrypting the MyPass credentials with provided master password located at " + encryptedPassFilePath)
+            decryptFile()
+            logging.info("Starting up main window of MyPass to store credentials at " + encryptedPassFilePath)
             drawWindow()
         else:
+            logging.info("Exiting application.")
             quit()
 
 
@@ -69,6 +88,7 @@ def drawWindow():
     :return:
     """
     window = Tk()
+    window.protocol("WM_DELETE_WINDOW", closeFunction) # Will execute this function before closing
     window.resizable(False, False)
     window.title("MyPass")
     window.configure(bg=bgColor)
@@ -81,10 +101,6 @@ def drawWindow():
     canvas.create_image(200, 200, image=logoImg)
     canvas.configure(bg=bgColor)
     canvas.grid(column=1, row=1, columnspan=1)
-
-    # View passwords
-    viewPass = Button(text="PASSWORDS", font=("Arial", 12, "bold"), bg="#fcac50")
-    viewPass.grid(column=0, row=6, padx=wdgtXPad, pady=wdgtYPad)
 
     # Labels in columns 0
     websiteLabel = Label(text="Website:", font=("Arial", 14, "bold"), fg="white", bg=bgColor)
@@ -108,7 +124,7 @@ def drawWindow():
     passwdInput = Entry(textvariable=passwd, width=61)
     passwdInput.grid(column=1, row=4, padx=wdgtXPad, pady=wdgtYPad)
 
-    addBtn = Button(text="ADD", width=60, bg="#1dd8f4", font=("Arial", 10, "bold"), command=lambda: addBtnCallback(websiteInput.get(), emailInput.get(), passwdInput.get()))
+    addBtn = Button(text="ADD", width=60, bg="#1dd8f4", font=("Arial", 10, "bold"), command=lambda: addBtnCallback(websiteInput, emailInput, passwdInput))
     addBtn.grid(column=1, row=5, columnspan=2, padx=wdgtXPad, pady=wdgtYPad)
 
     # Button field in column 2
@@ -116,6 +132,10 @@ def drawWindow():
     genPass.grid(column=2, row=4, padx=wdgtXPad, pady=wdgtYPad)
 
     window.mainloop()
+
+
+
+
 
 
 def genPassword(passwdField):
@@ -129,35 +149,63 @@ def genPassword(passwdField):
     totalAllowedCharacters += string.digits
     totalCharacters = len(totalAllowedCharacters) - 1
     for x in range(25):
-        singleChar = totalAllowedCharacters[int.from_bytes(os.urandom(32),"little") % totalCharacters]
+        singleChar = totalAllowedCharacters[int.from_bytes(os.urandom(32), "little") % totalCharacters]
         thePass += singleChar
     passwdField.delete(0,len(passwdField.get()))
     passwdField.insert(0,thePass)
 
 
 
-def encryptFile(userInput):
+def closeFunction():
+    """
+    Encrypts the file before exiting the application.
+    :return:
+    """
+    logging.info("Encrypting user's credentials.")
+    encryptFile()
+    logging.info("Closing the MyPass application.")
+    quit()
+
+
+
+def encryptFile():
     """
     Encrypts the entire password file after adding the information to the file.
-    The new window will refresh with the added information.
     :param userInput:
     :return:
     """
-    pass
+    if symkey:
+        fernetKey = Fernet(symkey)
+        with open(encryptedPassFilePath,'rb') as fileD:
+            content = fileD.read()
+        token = fernetKey.encrypt(content)
+        with open(encryptedPassFilePath,'wb') as fileE:
+            fileE.write(token)
+    else:
+        logging.error("The symmetric key has failed to initialize during encryption!")
 
 
 
-def decryptFile(userInput):
+
+def decryptFile():
     """
     Decrypts the entire password file
     :param userInput: String input that the user has entered
     :return:
     """
-    pass
+    if symkey:
+        fernetKey = Fernet(symkey)
+        with open(encryptedPassFilePath,'rb') as fileE:
+            content = fileE.read()
+        token = fernetKey.decrypt(content)
+        with open(encryptedPassFilePath,'wb') as fileD:
+            fileD.write(token)
+    else:
+        logging.error("The symmetric key has failed to initialize during decryption!")
 
 
 
-def addBtnCallback(website, email, passwd):
+def addBtnCallback(wEnt, eEnt, pEnt):
     """
     Will add all the information from the input fields and place it into the excel file.
     :return: None
@@ -165,11 +213,14 @@ def addBtnCallback(website, email, passwd):
     passWb = load_workbook(encryptedPassFilePath)
     passWs = passWb["Passwords"]
     lastRow = passWs.max_row
-    passWs.cell(column=1, row=lastRow+1, value=website)
-    passWs.cell(column=2, row=lastRow+1, value=email)
-    passWs.cell(column=3, row=lastRow+1, value=passwd)
+    passWs.cell(column=1, row=lastRow+1, value=wEnt.get())
+    passWs.cell(column=2, row=lastRow+1, value=eEnt.get())
+    passWs.cell(column=3, row=lastRow+1, value=pEnt.get())
     passWb.save(encryptedPassFilePath)
     messagebox.showinfo(message="Credentials were added!")
+    wEnt.delete(0, len(wEnt.get()))
+    eEnt.delete(0, len(eEnt.get()))
+    pEnt.delete(0, len(pEnt.get()))
 
 
 
@@ -217,8 +268,9 @@ def savePassword(window, passwd, confirmPasswd):
     :param confirmPasswd: Users password to make sure the user typed the password correctly
     :return:
     """
+    global symkey
     if (passwd != confirmPasswd):
-        print("Passwords do not match!")
+        logging.warning("Passwords did not match!")
     else:
         salt1 = os.urandom(32)
         passwdB = bytes(confirmPasswd, 'UTF-8')
@@ -285,6 +337,7 @@ def compareMasterPassword(window, password):
     :return: None
     """
     global passIsSame
+    global symkey
     hashesWb = load_workbook(saltedHashPassFilePath)
     ws = hashesWb["Master Pass"]
     origPass = bytes(ws['A1'].value,'utf-8')
@@ -308,6 +361,7 @@ def compareMasterPassword(window, password):
 
 def main():
     initialize()
+
 
 if __name__ == "__main__":
     main()
