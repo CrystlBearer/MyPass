@@ -1,6 +1,3 @@
-# MyPass
-
-
 <div id="top"></div>
 <!--
 *** Thanks for checking out the Best-README-Template. If you have a suggestion
@@ -21,12 +18,8 @@
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
 [![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
 
 
 <!-- PROJECT LOGO -->
@@ -35,10 +28,10 @@
   <a href="https://github.com/CrystlBearer/MyPass">
     <img src="images/my-lock-logo.png" alt="Logo" width="80" height="80">
   </a>
-Logo was taken and modified from here: <a href="https://www.flaticon.com/free-icons/lock" title="lock icons">Lock icons created by Freepik - Flaticon</a>
-
-<h3 align="center">MyPass</h3>
-
+    <p align="center">
+    Logo was taken and modified from here: <a href="https://www.flaticon.com/free-icons/lock" title="lock icons">Lock icons created by Freepik - Flaticon</a>
+    </p>
+<h1 align="center">MyPass</h1>
   <p align="center">
     Password Manager that's offline and left only on the user's machine. It is saved into an encrypted file and can only be accessed during use of the application.
     <br />
@@ -77,7 +70,6 @@ Logo was taken and modified from here: <a href="https://www.flaticon.com/free-ic
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
@@ -85,10 +77,10 @@ Logo was taken and modified from here: <a href="https://www.flaticon.com/free-ic
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
-Here's a blank template to get started: To avoid retyping too much info. Do a search and replace with your text editor for the following: `github_username`, `repo_name`, `twitter_handle`, `linkedin_username`, `email_client`, `email`, `project_title`, `project_description`
+[![Product Name Screen Shot][product-screenshot]](https://github.com/CrystlBearer/MyPass)
+This project is an offline password manager that uses Python Tkinter and the cryptography library.
+This doesn't rely on the internet and stores on the local user's machine in their home directory.
+The user's credentials are stored into an encrypted file that can only be accessed during the use of the application.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -106,32 +98,24 @@ Here's a blank template to get started: To avoid retyping too much info. Do a se
 <!-- GETTING STARTED -->
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
 To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
+Install [Python 3.9](https://www.python.org/downloads/) which should include pip.
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
+* pip
   ```sh
-  npm install npm@latest -g
+  pip install cryptography
+  pip install openpyxl
   ```
 
 ### Installation
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
+1. Clone the repo
    ```sh
-   git clone https://github.com/github_username/repo_name.git
+   git clone https://github.com/CrystlBearer/MyPass.git
    ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -139,18 +123,19 @@ This is an example of how to list things you need to use the software and how to
 
 <!-- USAGE EXAMPLES -->
 ## Usage
+All the files are stored in ~/.mypass. 
+When running the application for the first time, the application will ask the user to set their master password.
+[set-password](images/Set_Password.png)
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
-
+Afterwards, the main window application will appear to allow the user to add their user credentials. When the user exits, the application will encrypt the user's credential files so no one else can access them. The next time the user uses the application the user will have to enter their master password to access their list of credentials.
+[main-window](images/MyPass_Main_Win.png)
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
 
 <!-- ROADMAP -->
 ## Roadmap
-See the [open issues](https://github.com/github_username/repo_name/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/CrystlBearer/MyPass/issues) for a full list of proposed features (and known issues).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -194,25 +179,12 @@ Project Link: [https://github.com/CrystlBearer/MyPass](https://github.com/Crystl
 
 
 
-<!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
-
-* []()
-* []()
-* []()
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-
-
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [contributors-shield]: https://img.shields.io/github/contributors/github_username/repo_name.svg?style=for-the-badge
 [contributors-url]: https://github.com/CrystlBearer/MyPass/graphs/contributors
-[stars-shield]: https://img.shields.io/github/stars/github_username/repo_name.svg?style=for-the-badge
-[stars-url]: https://github.com/CrystlBearer/MyPass/stargazers
-[issues-shield]: https://img.shields.io/github/issues/github_username/repo_name.svg?style=for-the-badge
+[issues-shield]: (https://img.shields.io/github/issues/CrystlBearer/MyPass?style=for-the-badge)
 [issues-url]: https://github.com/CrystlBearer/MyPass/issues
-[license-shield]: https://img.shields.io/github/license/github_username/repo_name.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/CrystlBearer/MyPass?style=for-the-badge
 [license-url]: https://github.com/CrystlBearer/MyPass/LICENSE.txt
 [product-screenshot]: images/MyPass_Main_Win.png
