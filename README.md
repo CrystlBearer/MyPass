@@ -126,10 +126,10 @@ Install [Python 3.9](https://www.python.org/downloads/) which should include pip
 ## Usage
 All the files are stored in ~/.mypass. 
 When running the application for the first time, the application will ask the user to set their master password.
-[set-password](images/Set_Password.png)
+![set-password](images/Set_Password.png)
 
 Afterwards, the main window application will appear to allow the user to add their user credentials. When the user exits, the application will encrypt the user's credential files so no one else can access them. The next time the user uses the application the user will have to enter their master password to access their list of credentials.
-[main-window](images/MyPass_Main_Win.png)
+![main-window](images/MyPass_Main_Win.png)
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
