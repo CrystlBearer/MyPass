@@ -19,7 +19,7 @@
 -->
 [![Contributors][contributors-shield]][contributors-url]
 [![Issues][issues-shield]][issues-url]
-[![Filesize][filesize-shield]]
+[Filesize][filesize-shield]
 [![MIT License][license-shield]][license-url]
 
 
