@@ -19,6 +19,7 @@
 -->
 [![Contributors][contributors-shield]][contributors-url]
 [![Issues][issues-shield]][issues-url]
+[filesize-shield]
 [![MIT License][license-shield]][license-url]
 
 
@@ -181,10 +182,11 @@ Project Link: [https://github.com/CrystlBearer/MyPass](https://github.com/Crystl
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/github_username/repo_name.svg?style=for-the-badge
+[contributors-shield]: https://img.shields.io/github/contributors/CrystlBearer/MyPass?style=for-the-badge
 [contributors-url]: https://github.com/CrystlBearer/MyPass/graphs/contributors
 [issues-shield]: (https://img.shields.io/github/issues/CrystlBearer/MyPass?style=for-the-badge)
 [issues-url]: https://github.com/CrystlBearer/MyPass/issues
+[filesize-shield]: https://img.shields.io/github/repo-size/CrystlBearer/MyPass?style=for-the-badge
 [license-shield]: https://img.shields.io/github/license/CrystlBearer/MyPass?style=for-the-badge
 [license-url]: https://github.com/CrystlBearer/MyPass/LICENSE.txt
 [product-screenshot]: images/MyPass_Main_Win.png
