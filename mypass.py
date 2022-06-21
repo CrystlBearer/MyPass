@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import messagebox
+import tkinter.filedialog as fd
 import os
 import base64
 import stat
@@ -10,6 +11,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import logging
+import ctypes
 
 
 # UI Setup
@@ -25,26 +27,33 @@ symkey = None
 
 
 # Hard-coded items
-folderName = ".mypass"
-encryptedPassFilename = ".reserve.mpdb.xlsx"
-saltedHashPassFilename = ".auth.mpdb.xlsx"
+folderName = "MyPass"
+encryptedPassFilename = ".mypass.cred.xlsx"
+tmpDecryptedPassFilename = "mypass.tmp.cred.xlsx"
+saltedHashPassFilename = ".auth.xlsx"
 logFilename = "mypass.log"
+homePath = os.path.expanduser("~")
 folderPath = os.path.join(os.path.expanduser("~"), folderName)
-encryptedPassFilePath = os.path.join(os.path.expanduser("~"), folderName, encryptedPassFilename)
-saltedHashPassFilePath = os.path.join(os.path.expanduser("~"), folderName, saltedHashPassFilename)
-logPath = os.path.join(os.path.expanduser("~"), folderName, logFilename)
+encryptedPassFilePath = os.path.join(homePath, folderName, encryptedPassFilename)
+tmpDecryptedPassFilePath = os.path.join(homePath, folderName, tmpDecryptedPassFilename)
+saltedHashPassFilePath = os.path.join(homePath, folderName, saltedHashPassFilename)
+logPath = os.path.join(homePath, folderName, logFilename)
+ctypes.windll.shcore.SetProcessDpiAwareness(1)
 
 
 # Key check
 passIsSame = False
+
+# Import filename list
+importedFiles = None
 
 
 def initialize():
     """
     For first time creation:
     Application will create a folder created and called ~/.mypass.
-    The file the passwords will be stored will be called .reserve.mpdb.xlsx.
-    This .reserve.mpdb.xlsx will be an encrypted excel sheet with the Fernet library and will perform python functions to
+    The file the passwords will be stored will be called .mypass.cred.xlsx.
+    This .mypass.cred.xlsx will be an encrypted excel sheet with the Fernet library and will perform python functions to
     store into local variable after decrypting the sheet. It will only be decrypted during use of this application, after
     the password has been applied to it.
 
@@ -52,16 +61,22 @@ def initialize():
     The user's Master password is salted and hashed will be stored in a different file for future comparisons.
 
     After first time creation:
-    Window will prompt for the user's master password and proceed to decrypt the file. For any file modifictions, it must be done
-    during the time the Application has it's Main Window open.
+    Window will prompt for the user's master password and proceed to decrypt the file. For any file modifications, it must be done
+    during the time the Application has its Main Window open.
 
     :return:
     """
-    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', filename=logPath, encoding='utf-8', level=logging.DEBUG)
-    logging.info("Initializing MyPass application.")
+
+
     if not os.path.exists(folderPath):
         logging.info("Creating folder at " + folderPath)
         os.mkdir(folderPath)
+    if not os.path.exists(logPath):
+        fp = open(logPath, 'x')
+        fp.close()
+    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', filename=logPath,
+                        encoding='utf-8', level=logging.DEBUG)
+    logging.info("Initializing MyPass application.")
     if (not os.path.exists(encryptedPassFilePath) and not os.path.exists(saltedHashPassFilePath)):
         logging.info("Changing permissions of the folder at " + folderPath)
         os.chmod(folderPath, stat.S_IRWXU)
@@ -73,9 +88,9 @@ def initialize():
         logging.info("Checking the master password is same to the one on file.")
         checkPassword()
         if passIsSame:
-            logging.info("Decrypting the MyPass credentials with provided master password located at " + encryptedPassFilePath)
+            logging.info("Decrypting the MyPass credentials located at " + encryptedPassFilePath + " with provided master password.")
             decryptFile()
-            logging.info("Starting up main window of MyPass to store credentials at " + encryptedPassFilePath)
+            logging.info("Starting up main window of MyPass to store credentials at " + tmpDecryptedPassFilePath)
             drawWindow()
         else:
             logging.info("Exiting application.")
@@ -88,6 +103,18 @@ def drawWindow():
     :return:
     """
     window = Tk()
+
+    # Menu Bar
+    menubar = Menu(window)
+    window.option_add('*tearOff', FALSE)
+    fileMenu = Menu(menubar)
+    fileMenu.add_command(label="Import Files", command=importFile)
+    fileMenu.add_command(label="Open Vault", command=openVault)
+    fileMenu.add_separator()
+    fileMenu.add_command(label="Exit", underline=1, command=closeFunction)
+    menubar.add_cascade(label="File", menu=fileMenu)
+    window.config(menu=menubar)
+
     window.protocol("WM_DELETE_WINDOW", closeFunction) # Will execute this function before closing
     window.resizable(False, False)
     window.title("MyPass")
@@ -131,9 +158,8 @@ def drawWindow():
     genPass = Button(text="Generate Pass", font=("Arial", 10, "bold"), bg="#81f991", command=lambda: genPassword(passwdInput))
     genPass.grid(column=2, row=4, padx=wdgtXPad, pady=wdgtYPad)
 
+
     window.mainloop()
-
-
 
 
 
@@ -170,17 +196,19 @@ def closeFunction():
 
 def encryptFile():
     """
-    Encrypts the entire password file after adding the information to the file.
+    Encrypts the entire temporary password file and writes to the encrypted pass file.
     :param userInput:
     :return:
     """
     if symkey:
         fernetKey = Fernet(symkey)
-        with open(encryptedPassFilePath,'rb') as fileD:
+        with open(tmpDecryptedPassFilePath,'rb') as fileD:
             content = fileD.read()
         token = fernetKey.encrypt(content)
         with open(encryptedPassFilePath,'wb') as fileE:
             fileE.write(token)
+        if os.path.exists(tmpDecryptedPassFilePath):
+            os.remove(tmpDecryptedPassFilePath)
     else:
         logging.error("The symmetric key has failed to initialize during encryption!")
 
@@ -189,16 +217,20 @@ def encryptFile():
 
 def decryptFile():
     """
-    Decrypts the entire password file
+    Decrypts the entire password file and stores into a temporary file.
     :param userInput: String input that the user has entered
     :return:
     """
     if symkey:
+        tmpPassWb = Workbook()
+        passWs = tmpPassWb.active
+        passWs.title = "Passwords"
+        tmpPassWb.save(tmpDecryptedPassFilePath)
         fernetKey = Fernet(symkey)
         with open(encryptedPassFilePath,'rb') as fileE:
             content = fileE.read()
         token = fernetKey.decrypt(content)
-        with open(encryptedPassFilePath,'wb') as fileD:
+        with open(tmpDecryptedPassFilePath,'wb') as fileD:
             fileD.write(token)
     else:
         logging.error("The symmetric key has failed to initialize during decryption!")
@@ -210,13 +242,13 @@ def addBtnCallback(wEnt, eEnt, pEnt):
     Will add all the information from the input fields and place it into the excel file.
     :return: None
     """
-    passWb = load_workbook(encryptedPassFilePath)
+    passWb = load_workbook(tmpDecryptedPassFilePath)
     passWs = passWb["Passwords"]
     lastRow = passWs.max_row
     passWs.cell(column=1, row=lastRow+1, value=wEnt.get())
     passWs.cell(column=2, row=lastRow+1, value=eEnt.get())
     passWs.cell(column=3, row=lastRow+1, value=pEnt.get())
-    passWb.save(encryptedPassFilePath)
+    passWb.save(tmpDecryptedPassFilePath)
     messagebox.showinfo(message="Credentials were added!")
     wEnt.delete(0, len(wEnt.get()))
     eEnt.delete(0, len(eEnt.get()))
@@ -236,6 +268,7 @@ def setPassword():
     window.configure(bg=bgColor)
     window.config(padx=50, pady=50)
     window.minsize(width=550, height=150)
+    window.protocol("WM_DELETE_WINDOW", setPassCloseFunction)  # Will execute this function before closing
 
     # Labels in columns 0
     passwordLabel = Label(text="New Password:", font=("Arial", 14, "bold"), fg="white", bg=bgColor)
@@ -256,6 +289,11 @@ def setPassword():
     setPassBtn = Button(text="Set Password", font=("Arial", 14, "bold"), bg="#81f991", command=lambda: savePassword(window, passwordInput.get(), confirmPassInput.get()))
     setPassBtn.grid(column=2, row=2,  columnspan=2, padx=wdgtXPad, pady=wdgtYPad)
     window.mainloop()
+
+
+def setPassCloseFunction():
+    quit()
+
 
 
 
@@ -293,14 +331,17 @@ def savePassword(window, passwd, confirmPasswd):
         passWs.title = "Passwords"
         passwordWb.save(encryptedPassFilePath)
         window.destroy()
+        tmpPassWb = Workbook()
+        passWs = tmpPassWb.active
+        passWs.title = "Passwords"
+        tmpPassWb.save(tmpDecryptedPassFilePath)
 
 
 
 def checkPassword():
     """
-    Window will prompt user to enter the decryption password to access the file which is located in ~/.mypass/reserve.mpdb.
-    Will determine if reserve.mpdb has been tampered with previously by saving the encrypted hash. The encrypted hash will use the
-    user's private key to encrypt.
+    Window will prompt user to enter the decryption password to access the file which is located in ~/MyPass/mypass.cred.xlsx.
+    This file will be checked against ~/MyPass/mypass.cred.xlsx hash. If the file is tampered with, the passwords will no longer be accessible.
     :return: string input of the password in sha256 hash form
     """
     window = Tk()
@@ -357,6 +398,40 @@ def compareMasterPassword(window, password):
     else:
         passIsSame = False
         window.destroy()
+
+
+
+def importFile():
+    """
+    Callback function that imports the credentials that the user created in an excel sheet and stores into
+    the temporary database for later encryption.
+    :return:
+    """
+    importedFiles = fd.askopenfilenames(title="Select password files", initialdir=homePath,
+                                        filetypes=[("Excel files", ".xlsx .xls")], multiple=True)
+    if importedFiles:
+        passWb = load_workbook(tmpDecryptedPassFilePath)
+        passWs = passWb["Passwords"]
+        lastRow = passWs.max_row
+        for files in list(importedFiles):
+            tempWb = load_workbook(files)
+            tempWs = tempWb.active
+            tempLastRow = tempWs.max_row
+            for row in tempWs.iter_rows(min_row=1,max_col=3,max_row=tempLastRow):
+                passWs.cell(column=1, row=lastRow + 1, value=row[0].value)
+                passWs.cell(column=2, row=lastRow + 1, value=row[1].value)
+                passWs.cell(column=3, row=lastRow + 1, value=row[2].value)
+                lastRow += 1
+        passWb.save(tmpDecryptedPassFilePath)
+        messagebox.showinfo(message="Credentials were transferred!")
+        importedFiles = None
+
+
+
+
+
+def openVault():
+    os.startfile(tmpDecryptedPassFilePath)
 
 
 def main():
