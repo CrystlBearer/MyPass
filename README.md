@@ -80,6 +80,7 @@
 ## About The Project
 [![Product Name Screen Shot][product-screenshot]](https://github.com/CrystlBearer/MyPass)
 This project is an offline password manager that uses Python Tkinter, Cryptography, and Openpyxl.
+
 This doesn't rely on the internet and stores on the local user's machine in their home directory.
 The user's credentials are stored into an encrypted file that can only be accessed during the use of the application.
 
@@ -127,6 +128,7 @@ Install [Python 3.9](https://www.python.org/downloads/) which should include pip
 ## Usage
 All the files are stored in ~/.mypass. 
 When running the application for the first time, the application will ask the user to set their master password.
+
 ![set-password](images/Set_Password.png)
 
 Afterwards, the main window application will appear to allow the user to add their user credentials. When the user exits, the application will encrypt the user's credential files so no one else can access them. The next time the user uses the application the user will have to enter their master password to access their list of credentials.
