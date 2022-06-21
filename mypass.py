@@ -5,6 +5,7 @@ import os
 import base64
 import stat
 import string
+import sys
 from openpyxl import Workbook
 from openpyxl import load_workbook
 from cryptography.fernet import Fernet
@@ -94,7 +95,7 @@ def initialize():
             drawWindow()
         else:
             logging.info("Exiting application.")
-            quit()
+            sys.exit()
 
 
 def drawWindow():
@@ -190,7 +191,7 @@ def closeFunction():
     logging.info("Encrypting user's credentials.")
     encryptFile()
     logging.info("Closing the MyPass application.")
-    quit()
+    sys.exit()
 
 
 
@@ -292,7 +293,7 @@ def setPassword():
 
 
 def setPassCloseFunction():
-    quit()
+    sys.exit()
 
 
 
