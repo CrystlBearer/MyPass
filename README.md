@@ -138,6 +138,29 @@ Afterwards, the main window application will appear to allow the user to add the
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 
+## Creating a Windows Executable
+To create a windows executable with the python script following the following steps:
+1. Download the source code and extract the source code if zipped.
+2. 
+    ```sh
+      pip install auto-py-to-exe
+      ```
+3.
+    ```sh
+      auto-py-to-exe.exe
+      ```
+4. Browse for mypass.py as the script location from the downloaded source code.
+5. Click on "One Directory" for the *Onefile section*.
+6. Click on "Window Based" for the *Console Window section*.
+7. Click on "Icon" and search for the icon in the resources/ folder from the downloaded source code.
+8. Click on Additional Files to expand and click the "Add Folder" button then select the resources/ folder from the downloaded source code.
+9. Click on "CONVERT .Py to .EXE" to begin creating the executable.
+
+![py-window](images/autopy2exe.png)
+10. Go to the folder and the end of the output and find the location of the newly built executable. Feel free to move the folder anywhere.
+11. Create shortcut to the mypass.exe found in your folder and drag to the desktop.
+  
+
 
 <!-- ROADMAP -->
 ## Roadmap
