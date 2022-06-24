@@ -158,6 +158,8 @@ To create a windows executable with the python script following the following st
 
 ![py-window](images/autopy2exe.png)
 
+
+
 10. Go to the folder and the end of the output and find the location of the newly built executable. Feel free to move the folder anywhere.
 11. Create shortcut to the mypass.exe found in your folder and drag to the desktop.
   
