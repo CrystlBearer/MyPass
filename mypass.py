@@ -72,15 +72,16 @@ def initialize():
     if not os.path.exists(folderPath):
         logging.info("Creating folder at " + folderPath)
         os.mkdir(folderPath)
+        logging.info("Changing permissions of the folder at " + folderPath)
+        os.chmod(folderPath, stat.S_IRWXU)
     if not os.path.exists(logPath):
         fp = open(logPath, 'x')
         fp.close()
+
     logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', filename=logPath,
                         encoding='utf-8', level=logging.DEBUG)
     logging.info("Initializing MyPass application.")
-    if (not os.path.exists(encryptedPassFilePath) and not os.path.exists(saltedHashPassFilePath)):
-        logging.info("Changing permissions of the folder at " + folderPath)
-        os.chmod(folderPath, stat.S_IRWXU)
+    if (not os.path.exists(encryptedPassFilePath) or not os.path.exists(saltedHashPassFilePath)): # if one or the other file doesn't exist, reinitialize and delete the old one
         logging.info("Setting master password at " + saltedHashPassFilePath)
         setPassword()
         logging.info("Starting up main window of MyPass to store credentials at " + encryptedPassFilePath)
@@ -203,13 +204,23 @@ def encryptFile():
     """
     if symkey:
         fernetKey = Fernet(symkey)
-        with open(tmpDecryptedPassFilePath,'rb') as fileD:
-            content = fileD.read()
-        token = fernetKey.encrypt(content)
-        with open(encryptedPassFilePath,'wb') as fileE:
-            fileE.write(token)
-        if os.path.exists(tmpDecryptedPassFilePath):
-            os.remove(tmpDecryptedPassFilePath)
+        try:
+            with open(tmpDecryptedPassFilePath,'rb') as fileD:
+                content = fileD.read()
+                token = fernetKey.encrypt(content)
+        except:
+            logging.error(tmpDecryptedPassFilePath + " could not be found.")
+            raise FileNotFoundError("Could not find " + tmpDecryptedPassFilePath)
+
+        try:
+            with open(encryptedPassFilePath,'wb') as fileE:
+                fileE.write(token)
+        except:
+            logging.error(encryptedPassFilePath + " could not be found.")
+            raise FileNotFoundError("Could not find " + encryptedPassFilePath)
+        else:
+            if os.path.exists(tmpDecryptedPassFilePath):
+                os.remove(tmpDecryptedPassFilePath)
     else:
         logging.error("The symmetric key has failed to initialize during encryption!")
 
@@ -228,11 +239,19 @@ def decryptFile():
         passWs.title = "Passwords"
         tmpPassWb.save(tmpDecryptedPassFilePath)
         fernetKey = Fernet(symkey)
-        with open(encryptedPassFilePath,'rb') as fileE:
-            content = fileE.read()
-        token = fernetKey.decrypt(content)
-        with open(tmpDecryptedPassFilePath,'wb') as fileD:
-            fileD.write(token)
+        try:
+            with open(encryptedPassFilePath,'rb') as fileE:
+                content = fileE.read()
+        except:
+            logging.error(encryptedPassFilePath + " could not be found.")
+            raise FileNotFoundError("Could not find " + encryptedPassFilePath)
+        try:
+            token = fernetKey.decrypt(content)
+            with open(tmpDecryptedPassFilePath,'wb') as fileD:
+                fileD.write(token)
+        except:
+            logging.error(tmpDecryptedPassFilePath + " could not be found.")
+            raise FileNotFoundError("Could not find " + tmpDecryptedPassFilePath)
     else:
         logging.error("The symmetric key has failed to initialize during decryption!")
 
